@@ -29,7 +29,6 @@ class _AdminScreenState extends State<AdminScreen> {
   Position? currentPosition;
   LatLng? _currentLatLng;
   String? _selectedtypecar;
-  bool _isPaymentSelected = false;
   late Bill bill;
 
   final myBox = Hive.box('myBox');
@@ -70,8 +69,7 @@ class _AdminScreenState extends State<AdminScreen> {
       final Map<String, dynamic> response = await UploadService.uploadImage(
           file,
           _selectedtypecar!,
-          _currentLatLng.toString(),
-          _isPaymentSelected);
+          _currentLatLng.toString());
 
       if (response['status'] == "OK") {
         serverMessage = response['message'];
@@ -143,17 +141,6 @@ class _AdminScreenState extends State<AdminScreen> {
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.best)
           .timeout(Duration(seconds: 5));
-
-      // List<Placemark> placemarks = await placemarkFromCoordinates(
-      //     position.latitude,
-      //     position.longitude, localeIdentifier: "en"
-      // );
-      //
-      // String? city = placemarks[0].administrativeArea;
-      // String? street = placemarks[0].street;
-      // String? district = placemarks[0].subAdministrativeArea;
-      // String? fullNameCity = '$street, $district, $city';
-      //
       setState(() {
         _currentLatLng = LatLng(position.latitude, position.longitude);
       });
@@ -300,30 +287,6 @@ class _AdminScreenState extends State<AdminScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              Column(
-                children: [
-                  CheckboxListTile(
-                    title: const Text('Payment'),
-                    value: _isPaymentSelected,
-                    onChanged: (newValue) {
-                      setState(() {
-                        _isPaymentSelected = newValue!;
-                      });
-                    },
-                    controlAffinity: ListTileControlAffinity.trailing,
-                  ),
-                  CheckboxListTile(
-                    title: const Text('Not Payment'),
-                    value: !_isPaymentSelected,
-                    onChanged: (newValue) {
-                      setState(() {
-                        _isPaymentSelected = !newValue!;
-                      });
-                    },
-                    controlAffinity: ListTileControlAffinity.trailing,
-                  ),
-                ],
-              ),
             ],
           ),
           if (_showImage && _pictureFile != null)

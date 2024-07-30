@@ -7,7 +7,7 @@ import '../ipconfig/ip.dart';
 
 class UploadService {
   static Future<Map<String, dynamic>> uploadImage(File image,
-      String typeCar, String location, bool payment) async {
+      String typeCar, String location) async {
     try {
       print('anh 1: $image');
       DateTime now = DateTime.now();
@@ -30,7 +30,6 @@ class UploadService {
       request.fields['location'] = location;
       //request.fields['address'] = address;
       request.fields['currentDateAndTime'] = currentDateAndTime;
-      request.fields['payment'] = payment.toString();
 
       var streamedResponse = await request.send();
 
