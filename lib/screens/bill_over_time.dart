@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
@@ -22,8 +24,6 @@ class _ListBillOverTimeState extends State<ListBillOverTime> {
   List<dynamic>? _bills;
   late Bill bill;
   int _total = 0;
-  final myBox = Hive.box('myBox');
-  String? _userId;
 
   Future<void> _getListCarParkingOverTime() async {
     final Map<String, dynamic> response =
@@ -62,11 +62,13 @@ class _ListBillOverTimeState extends State<ListBillOverTime> {
     }
   }
 
-  Future<void> _isPayment(String billId, String userId, String payId, double hour, int amount, String method) async {
-    await isPaymentService.isPayment(billId, userId, payId, hour, amount, method);
+  Future<void> _isPayment(String billId, String userId, String payId,
+      double hour, int amount, String method) async {
+    await isPaymentService.isPayment(
+        billId, userId, payId, hour, amount, method);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Payment successful'),
+        content: Text('Set Payment successful'),
         duration: const Duration(seconds: 1),
         backgroundColor: Colors.green,
       ),
@@ -100,10 +102,74 @@ class _ListBillOverTimeState extends State<ListBillOverTime> {
     }
   }
 
+  Future<void> _showPaymentConfirmationDialog(dynamic bill) async {
+    var uuid = Uuid();
+    String uniqueId = uuid.v4();
+
+    final response = await http.get(
+      Uri.parse('$ip/fee/get-user-id/${bill['FeeId']}'),
+    );
+    var decodedResponse = json.decode(response.body);
+    String userId = decodedResponse['data']['UserId'];
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Xác nhận thanh toán"),
+          content: Text("Bạn có chắc chắn đặt hoá đơn này thành đã thanh toán không?"),
+          actions: <Widget>[
+            TextButton(
+              child: Text("Hủy"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text("Xác nhận"),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _isPayment(bill['BillId'], userId, uniqueId,
+                    bill['HoursParking'], bill['Price'], 'Tiền mặt');
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showDeleteConfirmationDialog(String billId) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Xác nhận xóa"),
+          content: Text("Bạn có chắc chắn muốn xóa hoá đơn này không?"),
+          actions: <Widget>[
+            TextButton(
+              child: Text("Hủy"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text("Xác nhận"),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _deleteBill(billId);
+                _getListCarParkingOverTime();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
-    _userId = myBox.get('userId', defaultValue: '');
     _getListCarParkingOverTime();
   }
 
@@ -116,82 +182,82 @@ class _ListBillOverTimeState extends State<ListBillOverTime> {
               ? const Center(child: CircularProgressIndicator())
               : _bills!.isEmpty
               ? const Center(child: Text('No bills available'))
-              : ListView.builder(
-            itemCount: _bills!.length,
-            itemBuilder: (BuildContext context, int index) {
-              final bill = _bills![index];
-              return GestureDetector(
-                onTap: () {
-                  _getDetailBill(bill['BillId']);
-                },
-                child: Container(
-                  margin: const EdgeInsets.all(8.0),
-                  padding: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.blue),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundImage:
-                        Image.network('${bill['ImageName']}')
-                            .image,
-                        radius: 30,
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment:
-                          CrossAxisAlignment.start,
+              : RefreshIndicator(
+            onRefresh: _getListCarParkingOverTime,
+            child: ListView.builder(
+              itemCount: _bills!.length,
+              itemBuilder: (BuildContext context, int index) {
+                final bill = _bills![index];
+                return GestureDetector(
+                  onTap: () {
+                    _getDetailBill(bill['BillId']);
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blue),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundImage:
+                          Image.network('${bill['ImageName']}')
+                              .image,
+                          radius: 30,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                  'License Plate: ${bill['LicensePlate']}'),
+                              Text(
+                                  'Address Parking: ${bill['AddressParking']}'),
+                              Text(
+                                  'Is Payment: ${bill['IsPayment']}'),
+                              Text(
+                                  'Hours Parking: ${bill['HoursParking']}'),
+                              Text(
+                                  'Price: ${intl.NumberFormat.decimalPattern().format(bill['Price'])} VND'),
+                              Text(
+                                  'Time start parking: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(bill['CreatedAt']))}'),
+                              Text(
+                                  'Time end parking: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(bill['UpdatedAt']))}'),
+                            ],
+                          ),
+                        ),
+                        Column(
                           children: [
-                            Text(
-                                'License Plate: ${bill['LicensePlate']}'),
-                            Text(
-                                'Address Parking: ${bill['AddressParking']}'),
-                            Text(
-                                'Is Payment: ${bill['IsPayment']}'),
-                            Text(
-                                'Hours Parking: ${bill['HoursParking']}'),
-                            Text(
-                                'Price: ${intl.NumberFormat.decimalPattern().format(bill['Price'])} VND'),
-                            Text(
-                                'Time start parking: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(bill['CreatedAt']))}'),
-                            Text(
-                                'Time end parking: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(bill['UpdatedAt']))}'),
+                            IconButton(
+                              icon: const Icon(Icons.payment_outlined,
+                                  color: Colors.deepPurpleAccent),
+                              onPressed: () {
+                                _showPaymentConfirmationDialog(bill);
+                              },
+                            ),
+                            SizedBox(
+                              height: 20,
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete,
+                                  color: Colors.red),
+                              onPressed: () {
+                                _showDeleteConfirmationDialog(
+                                    bill['BillId']);
+                              },
+                            ),
                           ],
                         ),
-                      ),
-
-                      Column(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.payment_outlined, color: Colors.deepPurpleAccent),
-                            onPressed: () async {
-                              var uuid = Uuid();
-                              String uniqueId = uuid.v4();
-                              if (bill['HoursParking'] == 0) {
-                                bill['HoursParking'] = 0.toDouble();
-                              }
-                              await _isPayment(bill['BillId'], _userId!, uniqueId, bill['HoursParking'], bill['Price'], 'Tiền mặt');
-                            },
-                          ),
-                          SizedBox(height: 20,),
-                          IconButton(
-                            icon: const Icon(Icons.delete,
-                                color: Colors.red),
-                            onPressed: () async {
-                              await _deleteBill(bill['BillId']);
-                              _getListCarParkingOverTime();
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
           Positioned(
             bottom: 16,

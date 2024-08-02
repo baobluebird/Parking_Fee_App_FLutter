@@ -22,7 +22,6 @@ class _UserParkingListScreenState extends State<UserParkingListScreen> {
   final myBox = Hive.box('myBox');
   String? _userId;
 
-
   Future<void> _getListCarDuringParkingByUser() async {
     final Map<String, dynamic> response =
     await getListCarDuringParkingByUserService.getListCarDuringParkingByUser(_userId!);
@@ -60,7 +59,6 @@ class _UserParkingListScreenState extends State<UserParkingListScreen> {
     }
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -77,69 +75,76 @@ class _UserParkingListScreenState extends State<UserParkingListScreen> {
               ? const Center(child: CircularProgressIndicator())
               : _bills!.isEmpty
               ? const Center(child: Text('No bills available'))
-              : ListView.builder(
-            itemCount: _bills!.length,
-            itemBuilder: (BuildContext context, int index) {
-              final bill = _bills![index];
-              return GestureDetector(
-                onTap: () {
-                  _getDetailBill(bill['BillId']);
-                },
-                child: Container(
-                  margin: const EdgeInsets.all(8.0),
-                  padding: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.blue),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundImage:
-                        Image.network('${bill['ImageName']}')
-                            .image,
-                        radius: 30,
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment:
-                          CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                                'License Plate: ${bill['LicensePlate']}'),
-                            Text(
-                                'Address Parking: ${bill['AddressParking']}'),
-                            Text(
-                                'Is Payment: ${bill['IsPayment']}'),
-                            Text(
-                                'Hours Parking To Current: ${bill['hour']}'),
-                            Text(
-                                'Price: ${intl.NumberFormat.decimalPattern().format(bill['Price'])} VND'),
-                            Text(
-                                'Time start parking: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(bill['CreatedAt']))}'),
-                          ],
+              : RefreshIndicator(
+            onRefresh: _getListCarDuringParkingByUser,
+            child: ListView.builder(
+              itemCount: _bills!.length,
+              itemBuilder: (BuildContext context, int index) {
+                final bill = _bills![index];
+                return GestureDetector(
+                  onTap: () {
+                    _getDetailBill(bill['BillId']);
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blue),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundImage:
+                          Image.network('${bill['ImageName']}')
+                              .image,
+                          radius: 30,
                         ),
-                      ),
-                      IconButton(
-                        onPressed: () async{
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => PaymentScreen(userId: _userId, billId: bill['BillId'], hour: double.parse(bill['hour'].toString()),amount: bill['Price'])),
-                          );
-                        },
-                        icon: Icon(
-                          Icons.payment,
-                          color: Colors.deepPurpleAccent,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                  'License Plate: ${bill['LicensePlate']}'),
+                              Text(
+                                  'Address Parking: ${bill['AddressParking']}'),
+                              Text(
+                                  'Is Payment: ${bill['IsPayment']}'),
+                              Text(
+                                  'Hours Parking To Current: ${bill['hour']}'),
+                              Text(
+                                  'Price: ${intl.NumberFormat.decimalPattern().format(bill['Price'])} VND'),
+                              Text(
+                                  'Time start parking: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(bill['CreatedAt']))}'),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-
+                        IconButton(
+                          onPressed: () async {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => PaymentScreen(
+                                      userId: _userId,
+                                      billId: bill['BillId'],
+                                      hour: double.parse(
+                                          bill['hour'].toString()),
+                                      amount: bill['Price'])),
+                            );
+                          },
+                          icon: Icon(
+                            Icons.payment,
+                            color: Colors.deepPurpleAccent,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
           Positioned(
             bottom: 16,

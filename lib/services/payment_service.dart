@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import '../ipconfig/ip.dart';
 
 class createPaymentService {
-  static Future<Map<String, dynamic>> createPayment( int amount) async {
+  static Future<Map<String, dynamic>> createPayment(int amount) async {
     try {
       var response = await http.post(
         Uri.parse('$ip/payment/create-payment'),
@@ -43,29 +43,27 @@ class createPaymentService {
 }
 
 class isPaymentService {
-  static Future<Map<String, dynamic>> isPayment(String billId, String userId, String payId, double hour, int amount, String method) async {
+  static Future<Map<String, dynamic>> isPayment(String billId, String userId,
+      String payId, double hour, int amount, String method) async {
     try {
       var response = await http.post(
         Uri.parse('$ip/payment/is-payment/$billId'),
-        body: jsonEncode({'userId': userId, 'amount': amount, 'payId': payId, 'hour': hour, 'method': method}),
+        body: jsonEncode({
+          'userId': userId,
+          'amount': amount,
+          'payId': payId,
+          'hour': hour,
+          'method': method
+        }),
         headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 200) {
         var decodedResponse = json.decode(response.body);
-
-        if (decodedResponse.containsKey('status') &&
-            decodedResponse.containsKey('data') &&
-            decodedResponse.containsKey('message') ) {
-          return {
-            'status': decodedResponse['status'],
-            'data': decodedResponse['data'],
-            'message': decodedResponse['message']
-          };
-        } else {
-          print('data null');
-          return {'status': 'OK', 'data': 'null'};
-        }
+        return {
+          'status': decodedResponse['status'],
+          'message': decodedResponse['message']
+        };
       } else {
         return {'status': 'error', 'message': 'Non-200 status code'};
       }
@@ -88,7 +86,7 @@ class getListPaymentUserService {
 
         if (decodedResponse.containsKey('status') &&
             decodedResponse.containsKey('data') &&
-            decodedResponse.containsKey('message') ) {
+            decodedResponse.containsKey('message')) {
           return {
             'status': decodedResponse['status'],
             'data': decodedResponse['data'],
@@ -120,7 +118,7 @@ class getDetailPaymentService {
 
         if (decodedResponse.containsKey('status') &&
             decodedResponse.containsKey('data') &&
-            decodedResponse.containsKey('message') ) {
+            decodedResponse.containsKey('message')) {
           return {
             'status': decodedResponse['status'],
             'data': decodedResponse['data'],
@@ -140,7 +138,8 @@ class getDetailPaymentService {
 }
 
 class getDetailPaymentUserService {
-  static Future<Map<String, dynamic>> getDetailPaymentUser(String paymentId) async {
+  static Future<Map<String, dynamic>> getDetailPaymentUser(
+      String paymentId) async {
     try {
       var response = await http.get(
         Uri.parse('$ip/payment/get-detail-payment-by-user/$paymentId'),
@@ -151,7 +150,7 @@ class getDetailPaymentUserService {
 
         if (decodedResponse.containsKey('status') &&
             decodedResponse.containsKey('data') &&
-            decodedResponse.containsKey('message') ) {
+            decodedResponse.containsKey('message')) {
           return {
             'status': decodedResponse['status'],
             'data': decodedResponse['data'],
@@ -182,7 +181,7 @@ class getListCarIsPaymentService {
 
         if (decodedResponse.containsKey('status') &&
             decodedResponse.containsKey('data') &&
-            decodedResponse.containsKey('message') ) {
+            decodedResponse.containsKey('message')) {
           return {
             'status': decodedResponse['status'],
             'data': decodedResponse['data'],
@@ -203,7 +202,8 @@ class getListCarIsPaymentService {
 }
 
 class getListCarIsPaymentByUserService {
-  static Future<Map<String, dynamic>> getListCarIsPaymentByUser(String userId) async {
+  static Future<Map<String, dynamic>> getListCarIsPaymentByUser(
+      String userId) async {
     try {
       var response = await http.get(
         Uri.parse('$ip/payment/get-list-car-is-payment-by-user/$userId'),
@@ -214,7 +214,7 @@ class getListCarIsPaymentByUserService {
 
         if (decodedResponse.containsKey('status') &&
             decodedResponse.containsKey('data') &&
-            decodedResponse.containsKey('message') ) {
+            decodedResponse.containsKey('message')) {
           return {
             'status': decodedResponse['status'],
             'data': decodedResponse['data'],

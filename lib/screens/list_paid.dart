@@ -108,6 +108,62 @@ class _ListBillIsPaymentState extends State<ListBillIsPayment> {
     }
   }
 
+  Future<void> _showPaymentDetailConfirmationDialog(String billId) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Xác nhận chi tiết thanh toán"),
+          content:
+          Text("Bạn có chắc chắn muốn xem chi tiết thanh toán cho hoá đơn này không?"),
+          actions: <Widget>[
+            TextButton(
+              child: Text("Hủy"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text("Xác nhận"),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _getDetailPayment(billId);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showDeleteConfirmationDialog(String billId) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Xác nhận xóa"),
+          content: Text("Bạn có chắc chắn muốn xóa hoá đơn này không?"),
+          actions: <Widget>[
+            TextButton(
+              child: Text("Hủy"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text("Xác nhận"),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _deleteBill(billId);
+                _getListCarIsPayment();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -123,78 +179,83 @@ class _ListBillIsPaymentState extends State<ListBillIsPayment> {
               ? const Center(child: CircularProgressIndicator())
               : _bills!.isEmpty
               ? const Center(child: Text('No bills available'))
-              : ListView.builder(
-            itemCount: _bills!.length,
-            itemBuilder: (BuildContext context, int index) {
-              final bill = _bills![index];
-              return GestureDetector(
-                onTap: () {
-                  _getDetailBill(bill['BillId']);
-                },
-                child: Container(
-                  margin: const EdgeInsets.all(8.0),
-                  padding: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.blue),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundImage:
-                        Image.network('${bill['ImageName']}')
-                            .image,
-                        radius: 30,
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment:
-                          CrossAxisAlignment.start,
+              : RefreshIndicator(
+            onRefresh: _getListCarIsPayment,
+            child: ListView.builder(
+              itemCount: _bills!.length,
+              itemBuilder: (BuildContext context, int index) {
+                final bill = _bills![index];
+                return GestureDetector(
+                  onTap: () {
+                    _getDetailBill(bill['BillId']);
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blue),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundImage:
+                          Image.network('${bill['ImageName']}')
+                              .image,
+                          radius: 30,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                  'License Plate: ${bill['LicensePlate']}'),
+                              Text(
+                                  'Address Parking: ${bill['AddressParking']}'),
+                              Text(
+                                  'Is Payment: ${bill['IsPayment']}'),
+                              Text(
+                                  'Hours Parking: ${bill['HoursParking']}'),
+                              Text(
+                                  'Price: ${intl.NumberFormat.decimalPattern().format(bill['Price'])} VND'),
+                              Text(
+                                  'Time start parking: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(bill['CreatedAt']))}'),
+                              Text(
+                                  'Time end parking: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(bill['UpdatedAt']))}'),
+                            ],
+                          ),
+                        ),
+                        Column(
                           children: [
-                            Text(
-                                'License Plate: ${bill['LicensePlate']}'),
-                            Text(
-                                'Address Parking: ${bill['AddressParking']}'),
-                            Text(
-                                'Is Payment: ${bill['IsPayment']}'),
-                            Text(
-                                'Hours Parking: ${bill['HoursParking']}'),
-                            Text(
-                                'Price: ${intl.NumberFormat.decimalPattern().format(bill['Price'])} VND'),
-                            Text(
-                                'Time start parking: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(bill['CreatedAt']))}'),
-                            Text(
-                                'Time end parking: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(bill['UpdatedAt']))}'),
+                            IconButton(
+                              icon: const Icon(Icons.list_alt,
+                                  color: Colors.blueGrey),
+                              onPressed: () {
+                                _showPaymentDetailConfirmationDialog(
+                                    bill['BillId']);
+                              },
+                            ),
+                            SizedBox(
+                              height: 20,
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete,
+                                  color: Colors.red),
+                              onPressed: () {
+                                _showDeleteConfirmationDialog(
+                                    bill['BillId']);
+                              },
+                            ),
                           ],
                         ),
-                      ),
-                      Column(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.list_alt,
-                                color: Colors.blueGrey),
-                            onPressed: () async {
-                              await _getDetailPayment(bill['BillId']);
-                            },
-                          ),
-                          SizedBox(height: 20,),
-                          IconButton(
-                            icon: const Icon(Icons.delete,
-                                color: Colors.red),
-                            onPressed: () async {
-                              print(bill['BillId']);
-                              await _deleteBill(bill['BillId']);
-                              _getListCarIsPayment();
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
           Positioned(
             bottom: 16,

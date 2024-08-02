@@ -75,70 +75,73 @@ class _UserOverTimeParkingListScreenState extends State<UserOverTimeParkingListS
               ? const Center(child: CircularProgressIndicator())
               : _bills!.isEmpty
               ? const Center(child: Text('No bills available'))
-              : ListView.builder(
-            itemCount: _bills!.length,
-            itemBuilder: (BuildContext context, int index) {
-              final bill = _bills![index];
-              return GestureDetector(
-                onTap: () {
-                  _getDetailBill(bill['BillId']);
-                },
-                child: Container(
-                  margin: const EdgeInsets.all(8.0),
-                  padding: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.blue),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundImage:
-                        Image.network('${bill['ImageName']}')
-                            .image,
-                        radius: 30,
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment:
-                          CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                                'License Plate: ${bill['LicensePlate']}'),
-                            Text(
-                                'Address Parking: ${bill['AddressParking']}'),
-                            Text(
-                                'Is Payment: ${bill['IsPayment']}'),
-                            Text(
-                                'Hours Parking: ${bill['HoursParking']}'),
-                            Text(
-                                'Price: ${intl.NumberFormat.decimalPattern().format(bill['Price'])} VND'),
-                            Text(
-                                'Time start parking: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(bill['CreatedAt']))}'),
-                            Text(
-                                'Time end parking: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(bill['UpdatedAt']))}'),
-                          ],
+              : RefreshIndicator(
+            onRefresh: _getListCarParkingOverTimeByUser,
+            child: ListView.builder(
+              itemCount: _bills!.length,
+              itemBuilder: (BuildContext context, int index) {
+                final bill = _bills![index];
+                return GestureDetector(
+                  onTap: () {
+                    _getDetailBill(bill['BillId']);
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blue),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundImage:
+                          Image.network('${bill['ImageName']}')
+                              .image,
+                          radius: 30,
                         ),
-                      ),
-                      IconButton(
-                        onPressed: () async{
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => PaymentScreen(userId: _userId, billId: bill['BillId'], hour:bill['HoursParking'], amount: bill['Price'])),
-                          );
-                        },
-                        icon: Icon(
-                          Icons.payment,
-                          color: Colors.deepPurpleAccent,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                  'License Plate: ${bill['LicensePlate']}'),
+                              Text(
+                                  'Address Parking: ${bill['AddressParking']}'),
+                              Text(
+                                  'Is Payment: ${bill['IsPayment']}'),
+                              Text(
+                                  'Hours Parking: ${bill['HoursParking']}'),
+                              Text(
+                                  'Price: ${intl.NumberFormat.decimalPattern().format(bill['Price'])} VND'),
+                              Text(
+                                  'Time start parking: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(bill['CreatedAt']))}'),
+                              Text(
+                                  'Time end parking: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(bill['UpdatedAt']))}'),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                        IconButton(
+                          onPressed: () async{
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => PaymentScreen(userId: _userId, billId: bill['BillId'], hour:bill['HoursParking'], amount: bill['Price'])),
+                            );
+                          },
+                          icon: Icon(
+                            Icons.payment,
+                            color: Colors.deepPurpleAccent,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
           Positioned(
             bottom: 16,
