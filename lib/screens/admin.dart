@@ -7,6 +7,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocode/geocode.dart';
+import 'package:flutter/services.dart'; // Import for PlatformException
+import 'dart:async'; // Thêm dòng này
+
 import '../components/list.dart';
 import '../model/bill.dart';
 import '../screens/bill_detail.dart';
@@ -30,6 +33,7 @@ class _AdminScreenState extends State<AdminScreen> {
   LatLng? _currentLatLng;
   String? _selectedtypecar;
   late Bill bill;
+  StreamSubscription<Position>? positionStream;
 
   final myBox = Hive.box('myBox');
   late String storedToken;
@@ -130,7 +134,7 @@ class _AdminScreenState extends State<AdminScreen> {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     //File im = File(pickedFile!.path);
     setState(() {
-      //_image = im;
+      //_pictureFile = im;
       _pictureFile = XFile(pickedFile!.path);
       _showImage = true;
     });
@@ -146,11 +150,24 @@ class _AdminScreenState extends State<AdminScreen> {
       });
 
       if (kDebugMode) {
-
+        print('Current location: $_currentLatLng');
       }
+    } on PlatformException catch (e) {
+      print("Error getting current location: ${e.message}");
     } catch (e) {
       print("Error getting current location: $e");
     }
+  }
+
+  void _startLocationUpdates() {
+    positionStream = Geolocator.getPositionStream(
+      desiredAccuracy: LocationAccuracy.best,
+      distanceFilter: 10, // Update location every 10 meters
+    ).listen((Position position) {
+      setState(() {
+        _currentLatLng = LatLng(position.latitude, position.longitude);
+      });
+    });
   }
 
   Future<void> _toggleFlash() async {
@@ -166,6 +183,7 @@ class _AdminScreenState extends State<AdminScreen> {
   void initState() {
     super.initState();
     _initCamera();
+    _startLocationUpdates(); // Start location updates when the screen is initialized
     if (widget.cameras != null && widget.cameras!.isNotEmpty) {
       _controller = CameraController(
         widget.cameras![0],
@@ -187,6 +205,7 @@ class _AdminScreenState extends State<AdminScreen> {
   @override
   void dispose() {
     _controller?.dispose();
+    positionStream?.cancel(); // Cancel the stream when the screen is disposed
     super.dispose();
   }
 
@@ -200,7 +219,6 @@ class _AdminScreenState extends State<AdminScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _buildBodyWithMap(),
-      // _isLocationLoaded ? _buildBodyWithMap() : _buildLoadingIndicator(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
@@ -348,10 +366,4 @@ class _AdminScreenState extends State<AdminScreen> {
       ),
     );
   }
-
-// Widget _buildLoadingIndicator() {
-//   return const Center(
-//     child: CircularProgressIndicator(),
-//   );
-// }
 }

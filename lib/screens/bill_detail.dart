@@ -55,9 +55,12 @@ class _BillScreenState extends State<BillScreen> {
             children: <Widget>[
               Text('Bill ID: ${widget.bill?.BillId}'),
               Text('License Plate: ${widget.bill?.LicensePlate}'),
+              Text('Type Car: ${widget.bill?.TypeCar}'),
               Text('Location: ${widget.bill?.Location}'),
               Text('Address Parking: ${widget.bill?.AddressParking}'),
               Text('Is Payment: ${widget.bill?.IsPayment}'),
+              widget.bill != null && widget.bill!.IsPayment
+                  ? Container():Center(child: Image.network('${widget.bill?.QrCode}')),
               const SizedBox(height: 16),
               const Text('Image:'),
               const SizedBox(height: 8),
