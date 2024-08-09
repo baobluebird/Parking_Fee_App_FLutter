@@ -25,6 +25,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         email = _emailController.text;
         final Map<String, dynamic> response =
         await ForgotPasswordService.sendEmail(_emailController.text);
+        print(response['message']);
         if (response['status'] == 'OK') {
           setState(() {
             id = response['id'];
@@ -36,6 +37,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             check = false;
             serverMessage = response['message'];
           });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(serverMessage),
+              duration: const Duration(seconds: 1),
+              backgroundColor: Colors.red,
+            ),
+          );
           print('Error occurred: ${response['message']}');
         }
       } catch (e) {

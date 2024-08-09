@@ -70,6 +70,9 @@ class _ListBillIsPaymentState extends State<ListBillIsPayment> {
     await getDetailBillService.getDetailBill(id);
     if (response['status'] == 'OK') {
       final Map<String, dynamic> billData = response['data'];
+      if (billData['HoursParking'] == 0) {
+        billData['HoursParking'] = 0.toDouble();
+      }
       bill = Bill.fromJson(billData);
       Navigator.push(
         context,
@@ -241,7 +244,7 @@ class _ListBillIsPaymentState extends State<ListBillIsPayment> {
                               height: 20,
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete,
+                              icon: const Icon(Icons.delete_forever,
                                   color: Colors.red),
                               onPressed: () {
                                 _showDeleteConfirmationDialog(

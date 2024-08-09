@@ -47,6 +47,9 @@ class _UserParkingListScreenState extends State<UserParkingListScreen> {
     await getDetailBillService.getDetailBill(id);
     if (response['status'] == 'OK') {
       final Map<String, dynamic> billData = response['data'];
+      if (billData['HoursParking'] == 0) {
+        billData['HoursParking'] = 0.toDouble();
+      }
       bill = Bill.fromJson(billData);
       Navigator.push(
         context,
@@ -123,6 +126,9 @@ class _UserParkingListScreenState extends State<UserParkingListScreen> {
                         ),
                         IconButton(
                           onPressed: () async {
+                            if (bill['HoursParking'] == 0) {
+                              bill['HoursParking'] = 0.toDouble();
+                            }
                             Navigator.push(
                               context,
                               MaterialPageRoute(

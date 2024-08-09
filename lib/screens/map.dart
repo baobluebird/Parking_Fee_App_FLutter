@@ -148,7 +148,69 @@ class MapScreenState extends State<MapScreen> {
       );
     }
   }
+  Future<void> _showDeleteConfirmationDialog(String billId, String nameList) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Xác nhận xóa"),
+          content: Text("Bạn có chắc chắn muốn xóa hoá đơn này không?"),
+          actions: <Widget>[
+            TextButton(
+              child: Text("Hủy"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text("Xác nhận"),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _deleteBill(billId, nameList);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+  Future<void> _deleteBill(String billId, String nameList) async {
+    final response = await http.delete(
+      Uri.parse('$ip/fee/delete-bill/$billId'),
+    );
 
+    if (response.statusCode == 200) {
+      if(nameList == 'parkingOverTimeLocations'){
+        setState(() {
+          _parkingOverTimeLocations!.removeWhere((bill) => bill['_id'] == billId);
+          _total2 = _parkingOverTimeLocations!.length;
+        });
+      } else {
+        setState(() {
+          _duringParkingLocations!.removeWhere((bill) => bill['_id'] == billId);
+          _total1 = _duringParkingLocations!.length;
+        });
+      }
+
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Bill deleted successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      _updateMarkers();
+
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete bill.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
   Future<void> _showPaymentConfirmationDialog(String billId, String feeId, double hoursParking, int price) async {
     var uuid = Uuid();
     String uniqueId = uuid.v4();
@@ -307,6 +369,7 @@ class MapScreenState extends State<MapScreen> {
         await getListLocationCarDuringParkingService
             .getListLocationCarDuringParking();
     if (response['status'] == 'OK') {
+      print(response['data']);
       setState(() {
         _duringParkingLocations =
             response['data'] == 'null' ? [] : response['data'];
@@ -514,6 +577,12 @@ class MapScreenState extends State<MapScreen> {
                                           _getDetailBill(item['BillId']);
                                         },
                                         icon: Icon(Icons.library_add_sharp)),
+                                    IconButton(
+                                        onPressed: () {
+                                          _showDeleteConfirmationDialog(item['BillId'], 'duringParkingLocations');
+                                        },
+                                        icon: Icon(Icons.delete_forever,color: Colors.red)
+                                    ),
                                   ],
                                 ),
 
@@ -641,6 +710,12 @@ class MapScreenState extends State<MapScreen> {
                                           _getDetailBill(item['BillId']);
                                         },
                                         icon: Icon(Icons.library_add_sharp)
+                                    ),
+                                    IconButton(
+                                        onPressed: () {
+                                          _showDeleteConfirmationDialog(item['BillId'] , 'parkingOverTimeLocations');
+                                        },
+                                        icon: Icon(Icons.delete_forever,color: Colors.red)
                                     ),
                                   ],
                                 )

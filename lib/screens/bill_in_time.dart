@@ -241,7 +241,7 @@ class _ListBillInTimeState extends State<ListBillInTime> {
                               height: 20,
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete,
+                              icon: const Icon(Icons.delete_forever,
                                   color: Colors.red),
                               onPressed: () {
                                 _showDeleteConfirmationDialog(

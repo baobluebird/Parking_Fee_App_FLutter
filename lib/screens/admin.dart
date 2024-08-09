@@ -14,6 +14,7 @@ import '../components/list.dart';
 import '../model/bill.dart';
 import '../screens/bill_detail.dart';
 import '../services/upload_service.dart';
+import 'loading.dart';
 
 class AdminScreen extends StatefulWidget {
   final List<CameraDescription>? cameras;
@@ -39,7 +40,6 @@ class _AdminScreenState extends State<AdminScreen> {
   late String storedToken;
 
   String serverMessage = '';
-  bool _isLoading = false;
   bool _isFlashOn = false; // Added to manage flash state
 
   Future<void> clearHiveBox(String boxName) async {
@@ -64,7 +64,7 @@ class _AdminScreenState extends State<AdminScreen> {
     });
   }
 
-  Future<void> _upload() async {
+  Future<void> _upload(BuildContext context) async {
     await _getLocation();
     if (_pictureFile != null &&
         _selectedtypecar != null &&
@@ -90,11 +90,10 @@ class _AdminScreenState extends State<AdminScreen> {
         }
         bill = Bill.fromJson(billData);
 
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                BillScreen(bill: bill),
+            builder: (context) => BillScreen(bill: bill),
           ),
         );
       } else {
@@ -106,6 +105,7 @@ class _AdminScreenState extends State<AdminScreen> {
             backgroundColor: Colors.red,
           ),
         );
+        Navigator.pop(context); // Return to AdminScreen if upload fails
       }
     } else {
       if (_selectedtypecar == null) {
@@ -126,15 +126,14 @@ class _AdminScreenState extends State<AdminScreen> {
           ),
         );
       }
+      Navigator.pop(context); // Return to AdminScreen if fields are missing
     }
   }
 
   Future<void> getImageFromGallery() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    //File im = File(pickedFile!.path);
     setState(() {
-      //_pictureFile = im;
       _pictureFile = XFile(pickedFile!.path);
       _showImage = true;
     });
@@ -326,42 +325,29 @@ class _AdminScreenState extends State<AdminScreen> {
               ],
             ),
           const SizedBox(height: 10),
-          Stack(
-            children: [
-              ElevatedButton(
-                onPressed: () async {
-                  if (!_isLoading) {
-                    setState(() {
-                      _isLoading = true;
-                    });
-                    await _upload();
-                    setState(() {
-                      _isLoading = false;
-                    });
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content:
-                        Text('Please fill in all fields and choose image!'),
-                        duration: Duration(seconds: 2),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                },
-                child: const Text('Upload'),
-              ),
-              if (_isLoading)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black.withOpacity(0.5),
-                    child: Center(
-                      child: CircularProgressIndicator(),
+          ElevatedButton(
+            onPressed: () {
+              if (_pictureFile != null && _selectedtypecar != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LoadingScreen(
+                      uploadFunction: () => _upload(context),
                     ),
                   ),
-                ),
-            ],
-          )
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please fill in all fields and choose image!'),
+                    duration: Duration(seconds: 2),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text('Upload'),
+          ),
         ],
       ),
     );

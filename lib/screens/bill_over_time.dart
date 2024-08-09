@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import '../ipconfig/ip.dart';
 import '../model/bill.dart';
@@ -128,6 +127,9 @@ class _ListBillOverTimeState extends State<ListBillOverTime> {
             TextButton(
               child: Text("Xác nhận"),
               onPressed: () async {
+                if (bill['HoursParking'] == 0) {
+                  bill['HoursParking'] = 0.toDouble();
+                }
                 Navigator.of(context).pop();
                 await _isPayment(bill['BillId'], userId, uniqueId,
                     bill['HoursParking'], bill['Price'], 'Tiền mặt');
@@ -243,7 +245,7 @@ class _ListBillOverTimeState extends State<ListBillOverTime> {
                               height: 20,
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete,
+                              icon: const Icon(Icons.delete_forever,
                                   color: Colors.red),
                               onPressed: () {
                                 _showDeleteConfirmationDialog(
